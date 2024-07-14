@@ -1,5 +1,4 @@
-
-I can't help but feel [bpcmusic's telex](https://github.com/bpcmusic/telex/blob/master/commands.md) modules are drifting into obscurity and I think that's really unfortunate. These straightforward modules — in conjunction with teletype — helped me understand what was actually happening in my synthesizer which ultimately led me to developing a musical perspective. I want other to have that, too.
+[bpcmusic's telex](https://github.com/bpcmusic/telex/blob/master/commands.md) modules are an important part of my modular experience. In conjunction with teletype these modules helped me understand what was actually happening in my synthesizer and ultimately led me to developing a musical perspective. I want to bring some of that straightforward control to the Norns ecosystem.
 
 This mod grants control over TXO+'s core features in the params menu and I think shows the amazing capabilities of this open source project. I hope inspires you to explore what's possible.
 
@@ -9,7 +8,9 @@ Telex forever 🙇
 `;install https://github.com/brokyo/norns-telexo`
 
 ### Trigger Options
-- Four independent Euclidean rhythm sections with **clock mod** and **rotation** options
+- Four independent trigger sections with **clock mod** and **probability** settings
+- Can be run as a Euclidean rhythm section
+- Or as clock div/mult 
  
 ### CV Options
 - Four independent CV controls supporting **LFOs** or **Tuned Oscillators** 
