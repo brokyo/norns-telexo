@@ -254,7 +254,6 @@ function generate_strum_timing(idx)
     end
 end
 
-
 -- Burst Setup
 function add_burst_params(idx)
     params:add_separator("burst_mode_header_" .. idx, "Burst")
@@ -361,6 +360,12 @@ function tr_api:add_txo_tr_params(idx)
     hide_strum_params(idx)
     hide_burst_params(idx)
     hide_euclidean_params(idx)
+end
+
+function tr_api:sync_triggers()
+    for i = 1, 4 do
+        tr_lanes[i].current_position = 1
+    end
 end
 
 return tr_api
