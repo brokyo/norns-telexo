@@ -158,7 +158,7 @@ function add_shared_params(idx)
         this_lane.clock_mod = clock_values[param]
     end)
     params:add{type = "control", id = "pulse_ms_tr_" .. idx, name = "Pulse Width", 
-       controlspec = controlspec.new(5, 500, 'lin', 5, 100, "ms")}
+       controlspec = controlspec.new(5, 500, 'lin', 5, 5, "ms")}
     params:set_action("pulse_ms_tr_" .. idx, function(value)
         crow.ii.txo.tr_time(idx, value)
     end)
