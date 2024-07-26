@@ -158,7 +158,7 @@ function add_shared_params(idx)
         this_lane.clock_mod = clock_values[param]
     end)
     params:add{type = "control", id = "pulse_ms_tr_" .. idx, name = "Pulse Width", 
-       controlspec = controlspec.new(10, 1000, 'lin', 10, 100, "ms")}
+       controlspec = controlspec.new(5, 500, 'lin', 5, 100, "ms")}
     params:set_action("pulse_ms_tr_" .. idx, function(value)
         crow.ii.txo.tr_time(idx, value)
     end)
@@ -249,7 +249,7 @@ function generate_strum_timing(idx)
         clock.run(function()
           clock.sleep(t)
           crow.ii.txo.tr_pulse(idx)          
-          print(string.format("Playing pulse %d at time %f", i, t))
+        --   print(string.format("Playing pulse %d at time %f", i, t))
         end)
     end
 end
@@ -346,7 +346,7 @@ function trigger_burst(idx)
         end
 
         crow.ii.txo.tr_pulse(idx)
-        print('burst ' .. i .. ' delay: ' .. delay_ms .. 'ms')
+        -- print('burst ' .. i .. ' delay: ' .. delay_ms .. 'ms')
     end
 end
 
