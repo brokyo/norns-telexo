@@ -210,46 +210,57 @@ function generate_strum_timing(idx)
     local duration_beats = duration_options[params:get("strum_duration_" .. idx)]
     local total_duration = clock.get_beat_sec() * duration_beats
     local num_pulses = params:get("strum_pulse_count_" .. idx)
-    local clustering = params:get("strum_clustering_percent_" .. idx)
+    local clustering = params:get("strum_clustering_percent_" .. idx) / 100
     local variation = params:get("strum_clustering_variation_" .. idx)
 
     local pulse_times = {}
+    local min_time = 0.001 -- Minimum time in seconds (1ms)
     
     for i = 1, num_pulses do
-      local t
-      local normalized_index = i / num_pulses
-  
-      if clustering <= 50 then
-        -- Interpolate between start cluster (0) and even distribution (50)
-        local k = clustering / 50
-        t = total_duration * (k * normalized_index + (1 - k) * math.pow(normalized_index, 2))
-      else
-        -- Interpolate between even distribution (50) and end cluster (100)
-        local k = (clustering - 50) / 50
-        t = total_duration * ((1 - k) * normalized_index + k * math.pow(normalized_index, 1/2))
-      end
-  
-      -- Apply random variation if specified
-      if variation > 0 then
-        local rand_variation = (math.random() - 0.5) * 2 * variation * total_duration / num_pulses
-        t = t + rand_variation
-      end
-      
-      table.insert(pulse_times, t)
+        local normalized_index = (i - 1) / (num_pulses - 1)
+        
+        -- Apply clustering
+        local t
+        if clustering < 0.5 then
+            -- Cluster towards the beginning
+            t = total_duration * (normalized_index ^ (1 / (clustering * 2)))
+        else
+            -- Cluster towards the end
+            t = total_duration * (1 - (1 - normalized_index) ^ (1 / ((1 - clustering) * 2)))
+        end
+        
+        -- Apply random variation
+        if variation > 0 then
+            local max_variation = total_duration * variation / num_pulses
+            t = t + (math.random() - 0.5) * max_variation
+        end
+        
+        -- Ensure t is within bounds and greater than min_time
+        t = math.max(min_time, math.min(t, total_duration))
+        
+        table.insert(pulse_times, t)
     end
     
-    return pulse_times
-  end
-  
+    -- Sort and adjust times to ensure minimum separation
+    table.sort(pulse_times)
+    for i = 2, #pulse_times do
+        if pulse_times[i] - pulse_times[i-1] < min_time then
+            pulse_times[i] = pulse_times[i-1] + min_time
+        end
+    end
 
-  function initiate_strum(idx)
+    return pulse_times
+end
+
+function initiate_strum(idx)
     local strum_timing = generate_strum_timing(idx)
+    -- tab.print(strum_timing)
+    local start_time = clock.get_beats()
 
     for i, t in ipairs(strum_timing) do
         clock.run(function()
-          clock.sleep(t)
-          crow.ii.txo.tr_pulse(idx)          
-        --   print(string.format("Playing pulse %d at time %f", i, t))
+            clock.sync(start_time + t / clock.get_beat_sec())
+            crow.ii.txo.tr_pulse(idx)
         end)
     end
 end
