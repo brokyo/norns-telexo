@@ -152,7 +152,7 @@ function add_shared_params(idx)
     local clock_options = {"1/16", "1/8", "1/4", "1/2", "x1", "x2", "x4", "x8", "x16"}
     local clock_values = {16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625}
 
-    params:add_option("clock_mod_tr_" .. idx, "Clock Mod", clock_options, 6)
+    params:add_option("clock_mod_tr_" .. idx, "Clock Mod", clock_options, 5)
     params:set_action("clock_mod_tr_" .. idx, function(param)
         local this_lane = tr_lanes[idx]
         this_lane.clock_mod = clock_values[param]
@@ -187,6 +187,7 @@ function add_strum_params(idx)
         controlspec = controlspec.new(0, 100, 'lin', 1, 50, "%")}
     params:add{type = "control", id = "strum_clustering_variation_" .. idx, name = "Variation", 
         controlspec = controlspec.new(0, 1, 'lin', 0.01, 0, "")}
+    params:add_option("strum_rhythm_" .. idx, "Rhythm", {"Even", "Dotted", "Triplet", "Swing"}, 1)
 end
 
 function show_strum_params(idx)
@@ -195,6 +196,7 @@ function show_strum_params(idx)
     params:show("strum_pulse_count_" .. idx)
     params:show("strum_clustering_percent_" .. idx)
     params:show("strum_clustering_variation_" .. idx)
+    params:show("strum_rhythm_" .. idx)
 end
 
 function hide_strum_params(idx)
@@ -203,6 +205,7 @@ function hide_strum_params(idx)
     params:hide("strum_pulse_count_" .. idx)
     params:hide("strum_clustering_percent_" .. idx)
     params:hide("strum_clustering_variation_" .. idx)
+    params:hide("strum_rhythm_" .. idx)
 end
 
 function generate_strum_timing(idx)
@@ -215,6 +218,9 @@ function generate_strum_timing(idx)
 
     local pulse_times = {}
     local min_time = 0.001 -- Minimum time in seconds (1ms)
+    
+    local rhythm_options = {"Even", "Dotted", "Triplet", "Swing"}
+    local rhythm_type = params:get("strum_rhythm_" .. idx)
     
     for i = 1, num_pulses do
         local normalized_index = (i - 1) / (num_pulses - 1)
@@ -233,6 +239,19 @@ function generate_strum_timing(idx)
         if variation > 0 then
             local max_variation = total_duration * variation / num_pulses
             t = t + (math.random() - 0.5) * max_variation
+        end
+        
+        -- Apply rhythmic variation
+        if rhythm_type == 2 then  -- Dotted
+            if i % 2 == 0 then
+                t = t * 1.5
+            end
+        elseif rhythm_type == 3 then  -- Triplet
+            t = t * (i % 3 == 0 and 1.333 or 0.667)
+        elseif rhythm_type == 4 then  -- Swing
+            if i % 2 == 0 then
+                t = t * 1.25
+            end
         end
         
         -- Ensure t is within bounds and greater than min_time
@@ -270,10 +289,11 @@ function add_burst_params(idx)
     params:add_separator("burst_mode_header_" .. idx, "Burst")
     params:add{type = "control", id = "burst_count_" .. idx, name = "Trigger Count", 
         controlspec = controlspec.new(0, 20, 'lin', 1, 3, "triggers")}
-    params:add{type= "control", id = "trigger_interval_" .. idx, name = "Trigger Interval", 
-        controlspec = controlspec.new(1, 1000, 'lin', 1, 50, "ms")}
+        params:add_option("trigger_interval_" .. idx, "Trigger Interval", 
+        {"1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4"}, 3)
     params:add{type = "control", id = "randomization_amount_" .. idx, name = "Humanize Amount", 
         controlspec = controlspec.new(0, 10, 'lin', 0.1, 0, "%")}
+    params:add_option("burst_rhythm_" .. idx, "Rhythm", {"Even", "Dotted", "Triplet", "Swing"}, 1)
 end
 
 function show_burst_params(idx)
@@ -281,6 +301,7 @@ function show_burst_params(idx)
     params:show("burst_count_" .. idx)
     params:show("trigger_interval_" .. idx)
     params:show("randomization_amount_" .. idx)
+    params:show("burst_rhythm_" .. idx)
 end
 
 function hide_burst_params(idx)
@@ -288,6 +309,44 @@ function hide_burst_params(idx)
     params:hide("burst_count_" .. idx)
     params:hide("trigger_interval_" .. idx)
     params:hide("randomization_amount_" .. idx)
+    params:hide("burst_rhythm_" .. idx)
+end
+
+function trigger_burst(idx)
+    local interval_options = {1/32, 1/16, 1/8, 1/4, 1/2, 1, 2, 4}
+    local interval_beats = interval_options[params:get("trigger_interval_" .. idx)]
+    local trigger_interval = clock.get_beat_sec() * interval_beats
+    local burst_count = params:get("burst_count_" .. idx)
+    local randomization_percentage = params:get("randomization_amount_" .. idx)
+    local rhythm_type = params:get("burst_rhythm_" .. idx)
+
+    local randomization_amount = trigger_interval * (randomization_percentage / 100)
+    
+    for i = 1, burst_count do
+        local base_delay = (i - 1) * trigger_interval
+
+        -- Apply rhythmic variation
+        if rhythm_type == 2 then  -- Dotted
+            if i % 2 == 0 then
+                base_delay = base_delay * 1.5
+            end
+        elseif rhythm_type == 3 then  -- Triplet
+            base_delay = base_delay * (i % 3 == 0 and 1.333 or 0.667)
+        elseif rhythm_type == 4 then  -- Swing
+            if i % 2 == 0 then
+                base_delay = base_delay * 1.25
+            end
+        end
+        
+        local humanization = (math.random() * randomization_amount) - (randomization_amount / 2)
+        local delay = base_delay + humanization
+        
+        if delay > 0 then
+            clock.sleep(delay)
+        end
+
+        crow.ii.txo.tr_pulse(idx)
+    end
 end
 
 -- Euclidean Setup
@@ -336,33 +395,8 @@ function next_euclidean_step(idx)
     this_lane.current_position = (tr_lanes[idx].current_position % #tr_lanes[idx].pattern) + 1
 end
 
--- Burst Setup
-function trigger_burst(idx)
-    local trigger_interval = params:get("trigger_interval_" .. idx)
-    local burst_count = params:get("burst_count_" .. idx)
-    local randomization_percentage = params:get("randomization_amount_" .. idx)
-    
-    local randomization_amount = trigger_interval * (randomization_percentage / 100)
-    
-    for i = 1, burst_count do
-        local base_delay = (i - 1) * trigger_interval
-        local humanization = (math.random() * randomization_amount) - (randomization_amount / 2)
-        local delay_ms = base_delay + humanization
-
-        -- Convert delay to seconds for clock.sleep
-        local delay_sec = delay_ms / 1000
-        
-        if delay_sec > 0 then
-            clock.sleep(delay_sec)
-        end
-
-        crow.ii.txo.tr_pulse(idx)
-        -- print('burst ' .. i .. ' delay: ' .. delay_ms .. 'ms')
-    end
-end
-
 function tr_api:add_txo_tr_params(idx)
-    params:add_group("telexo_tr_config" .. idx, "TR " .. idx, 20)
+    params:add_group("telexo_tr_config" .. idx, "TR " .. idx, 22)
     add_shared_params(idx)
     add_clock_params(idx)
     add_strum_params(idx)
