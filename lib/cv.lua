@@ -6,7 +6,7 @@ function cv_api:add_txo_cv_params(idx)
         "lfo_params_" .. idx,
         "cyc_time_" .. idx, 
         "cv_range_" .. idx, 
-        "cv_off_" .. idx,
+        "cv_center_" .. idx,
         "osc_rect_" .. idx
     }
 
@@ -108,16 +108,16 @@ function cv_api:add_txo_cv_params(idx)
 
     -- CV Offset
     params:add_number(
-        "cv_off_" .. idx,
-        "CV Offset",
+        "cv_center_" .. idx,
+        "CV Center",
         -100,
         100,
         0,
         function(param) return param:get() / 10 .. 'v' end
     )
-    params:set_action("cv_off_" .. idx, function(param)
-        local volts = param / 10
-        crow.ii.txo.cv_off(idx, volts)
+    params:set_action("cv_center_" .. idx, function(param)
+        local volts_to_raw = math.floor((param / 100) * 16384)
+        crow.ii.txo.osc_ctr(idx, volts_to_raw)
     end)
 
 
@@ -127,7 +127,18 @@ function cv_api:add_txo_cv_params(idx)
         "LFO Rect",
         -2,
         2,
-        0
+        0,
+        function(param)
+            local value = param:get()
+            if value == -2 then return "Negative Half"
+            elseif value == -1 then return "Negative Clipped"
+            elseif value == 0 then return "Full Range"
+            elseif value == 1 then return "Positive Clipped"
+            elseif value == 2 then return "Positive Half"
+            end
+
+            return value
+        end
     )
     params:set_action("osc_rect_" .. idx, function(param)
         crow.ii.txo.osc_rect(idx, param)
