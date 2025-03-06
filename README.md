@@ -1,6 +1,8 @@
-[bpcmusic's telex](https://github.com/bpcmusic/telex/blob/master/commands.md) modules are an important part of my modular experience. In conjunction with teletype these modules helped me understand what was actually happening in my synthesizer and ultimately led me to developing a musical perspective. I want to bring some of that straightforward control to the Norns ecosystem.
+[bpcmusic's telex](https://github.com/bpcmusic/telex/blob/master/commands.md) modules helped me develop a musical perspective. I want to bring some of that straightforward control to Norns.
 
-This mod grants control over TXO+'s core features in the params menu and I think shows the amazing capabilities of this open source project. I hope inspires you to explore what's possible.
+This mod grants control over TXO+'s core features in the params menu. Good for solving all sorts of problems. 
+
+There's a wild undocumented feature on the triggers that lets create event sequences. 
 
 Telex forever 🙇
 
@@ -9,8 +11,8 @@ Telex forever 🙇
 
 ### Trigger Options
 - Four independent trigger sections with **clock mod** and **probability** settings
-- Can be run as a Euclidean rhythm section
-- Or as clock div/mult 
+- Can be **pulsed**, **strummed**, or **burst**
+- Paramquencer for scheduling parameter changes. Very, very alpha.
  
 ### CV Options
 - Four independent CV controls supporting **LFOs** or **Tuned Oscillators** 
